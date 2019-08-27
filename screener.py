@@ -80,7 +80,7 @@ class TestStrategy(bt.Strategy):
  
             # SMA
             self.inds['SMA'][d._name] = dict()
-            self.inds['SMA'][d._name]['value']  = bt.indicators.SMA(d, period=20)
+            self.inds['SMA'][d._name]['value']  = bt.indicators.SMA(d, period=50)
             self.inds['SMA'][d._name]['bullish'] = d.close > self.inds['SMA'][d._name]['value']
             self.inds['SMA'][d._name]['bearish'] = d.close < self.inds['SMA'][d._name]['value']
  
@@ -139,13 +139,15 @@ data_list = alpha_vantage_eod(
 for i in range(len(data_list)):
  
     data = bt.feeds.PandasData(
-                dataname=data_list[i][0], # This is the Pandas DataFrame
+                dataname=data_list[i][0].reindex(index=data_list[i][0].index[::-1]), # This is the Pandas DataFrame
                 name=data_list[i][1], # This is the symbol
                 timeframe=bt.TimeFrame.Days,
                 compression=1
                 )
  
     #Add the data to Cerebro
+
+    
     cerebro.adddata(data)
  
 print('\nStarting Analysis')
