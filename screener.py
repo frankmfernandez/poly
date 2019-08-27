@@ -80,7 +80,7 @@ class TestStrategy(bt.Strategy):
  
             # SMA
             self.inds['SMA'][d._name] = dict()
-            self.inds['SMA'][d._name]['value']  = bt.indicators.SMA(d, period=50)
+            self.inds['SMA'][d._name]['value']  = bt.indicators.SMA(d, period=200)
             self.inds['SMA'][d._name]['bullish'] = d.close > self.inds['SMA'][d._name]['value']
             self.inds['SMA'][d._name]['bearish'] = d.close < self.inds['SMA'][d._name]['value']
  
@@ -133,7 +133,7 @@ cerebro.addstrategy(TestStrategy)
 symbol_list =['MSFT']
 data_list = alpha_vantage_eod(
                 symbol_list,
-                compact=True,
+                compact=False,
                 debug=False)
  
 for i in range(len(data_list)):
