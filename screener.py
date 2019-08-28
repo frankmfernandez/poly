@@ -57,14 +57,27 @@ def alpha_vantage_eod(symbol_list, compact=False, debug=False, *args, **kwargs):
         print('| Done!')
  
     return data_list
+
+# class VolumeSMA(bt.Indicator):
+#     lines = ('Volume',)
+#     params = (('period'),)
+
+#     def next(self):
+#         datasum = math.fsum(self.data.get(size=self.p.period))
+#         self.lines.sma[0] = datasum / self.p.period
+
+# def next(self):
+#   self.line[0] = math.fsum(self.data.get(0, size=self.p.period)) / self.p.period
  
 class TestStrategy(bt.Strategy):
  
     def __init__(self):
  
         self.inds = dict()
-        self.inds['RSI'] = dict()
-        self.inds['SMA'] = dict()
+        self.inds['200SMA'] = dict()
+        self.inds['30SMA'] = dict()
+        self.inds['30VSMA'] = dict()
+
  
         for i, d in enumerate(self.datas):
  
@@ -72,17 +85,28 @@ class TestStrategy(bt.Strategy):
             # bullish or bearish. We can do this by creating a new line that returns
             # true or false.
  
-            # RSI
-            self.inds['RSI'][d._name] = dict()
-            self.inds['RSI'][d._name]['value']  = bt.indicators.RSI(d, period=14)
-            self.inds['RSI'][d._name]['bullish'] = self.inds['RSI'][d._name]['value']  > 50
-            self.inds['RSI'][d._name]['bearish'] = self.inds['RSI'][d._name]['value']  < 50
+        # BUY TRIGGER
+            # 200SMA + CLOSE 5% + POSITIVE SLOPE
+            self.inds['200SMA'][d._name] = dict()
+            self.inds['200SMA'][d._name]['value']  = bt.indicators.SMA(d, period=200)
+            self.inds['200SMA'][d._name]['buy'] = d.close > self.inds['200SMA'][d._name]['value'] 
+            self.inds['200SMA'][d._name]['hold'] = d.close < self.inds['200SMA'][d._name]['value']
+
+            # 30SMA + POSITIVE SLOPE + ABOVE 200
+            self.inds['30SMA'][d._name] = dict()
+            self.inds['30SMA'][d._name]['value']  = bt.indicators.SMA(d, period=30)
+            self.inds['30SMA'][d._name]['buy'] = d.close > self.inds['30SMA'][d._name]['value']
+            self.inds['30SMA'][d._name]['hold'] = d.close < self.inds['30SMA'][d._name]['value']
+
+            # 30VSMA
+            self.inds['30VSMA'][d._name] = dict()
+            self.inds['30VSMA'][d._name]['value']  = bt.indicators.SMA(d.volume, period=30)
+            self.inds['30VSMA'][d._name]['buy'] = d.volume > 2*self.inds['30VSMA'][d._name]['value']
+            self.inds['30VSMA'][d._name]['hold'] = d.volume < 2*self.inds['30VSMA'][d._name]['value']
+
+            # TOTAL + VALUE
+
  
-            # SMA
-            self.inds['SMA'][d._name] = dict()
-            self.inds['SMA'][d._name]['value']  = bt.indicators.SMA(d, period=200)
-            self.inds['SMA'][d._name]['bullish'] = d.close > self.inds['SMA'][d._name]['value']
-            self.inds['SMA'][d._name]['bearish'] = d.close < self.inds['SMA'][d._name]['value']
  
     def stop(self):
         '''
@@ -104,13 +128,13 @@ class TestStrategy(bt.Strategy):
  
             for nested_key, nested_value in value.items():
  
-                if nested_value['bullish'] == True or nested_value['bearish'] == True:
-                    results[key].append([nested_key, nested_value['bullish'][0],
-                            nested_value['bearish'][0], nested_value['value'][0]])
+                if nested_value['buy'] == True or nested_value['hold'] == True:
+                    results[key].append([nested_key, nested_value['buy'][0],
+                            nested_value['hold'][0], nested_value['value'][0]])
  
  
         # Create and print the header
-        headers = ['Indicator','Symbol','Bullish','Bearish','Value']
+        headers = ['Indicator','Symbol','Buy','Hold','Value']
         print('|{:^10s}|{:^10s}|{:^10s}|{:^10s}|{:^10s}|'.format(*headers))
         print('|'+'-'*10+'|'+'-'*10+'|'+'-'*10+'|'+'-'*10+'|'+'-'*10+'|')
  
