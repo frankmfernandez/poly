@@ -74,8 +74,8 @@ class TestStrategy(bt.Strategy):
     def __init__(self):
  
         self.inds = dict()
-        self.inds['200SMA'] = dict()
-        self.inds['30SMA'] = dict()
+        self.inds['200SMAS'] = dict()
+        self.inds['90HI'] = dict()
         self.inds['30VSMA'] = dict()
 
  
@@ -86,23 +86,22 @@ class TestStrategy(bt.Strategy):
             # true or false.
  
         # BUY TRIGGER
-            # 200SMA + CLOSE 5% + POSITIVE SLOPE
-            self.inds['200SMA'][d._name] = dict()
-            self.inds['200SMA'][d._name]['value']  = bt.indicators.SMA(d, period=200)
-            self.inds['200SMA'][d._name]['buy'] = d.close > self.inds['200SMA'][d._name]['value'] 
-            self.inds['200SMA'][d._name]['hold'] = d.close < self.inds['200SMA'][d._name]['value']
+            # 200SMA POSITIVE SLOPE ROC
+            self.inds['200SMAS'][d._name] = dict()
+            self.inds['200SMAS'][d._name]['value']  = bt.indicators.SMA(d, period=200)
+            self.inds['200SMAS'][d._name]['slope']  = bt.indicators.ROC(bt.indicators.SMA(d, period=200), period=1)
+            self.inds['200SMAS'][d._name]['200+'] = d.close > self.inds['200SMAS'][d._name]['value'] 
+            self.inds['200SMAS'][d._name]['slope+'] = 0 < self.inds['200SMAS'][d._name]['slope']
 
-            # 30SMA + POSITIVE SLOPE + ABOVE 200
-            self.inds['30SMA'][d._name] = dict()
-            self.inds['30SMA'][d._name]['value']  = bt.indicators.SMA(d, period=30)
-            self.inds['30SMA'][d._name]['buy'] = d.close > self.inds['30SMA'][d._name]['value']
-            self.inds['30SMA'][d._name]['hold'] = d.close < self.inds['30SMA'][d._name]['value']
+            # 90HI + ABOVE 200
+            self.inds['90HI'][d._name] = dict()
+            self.inds['90HI'][d._name]['value']  = bt.indicators.Highest(d.close, period=90)
+            self.inds['90HI'][d._name]['90HI+'] = d.close == self.inds['90HI'][d._name]['value']
 
             # 30VSMA
             self.inds['30VSMA'][d._name] = dict()
             self.inds['30VSMA'][d._name]['value']  = bt.indicators.SMA(d.volume, period=30)
-            self.inds['30VSMA'][d._name]['buy'] = d.volume > 2*self.inds['30VSMA'][d._name]['value']
-            self.inds['30VSMA'][d._name]['hold'] = d.volume < 2*self.inds['30VSMA'][d._name]['value']
+            self.inds['30VSMA'][d._name]['30VSMA+'] = d.volume > 2*self.inds['30VSMA'][d._name]['value']
 
             # TOTAL + VALUE
 
@@ -128,13 +127,13 @@ class TestStrategy(bt.Strategy):
  
             for nested_key, nested_value in value.items():
  
-                if nested_value['buy'] == True or nested_value['hold'] == True:
-                    results[key].append([nested_key, nested_value['buy'][0],
-                            nested_value['hold'][0], nested_value['value'][0]])
+               if key== "200SMAS":
+                    results[key].append([nested_key, nested_value['value'][0],
+                            nested_value['slope'][0], nested_value['200+'][0], nested_value['slope+'][0]])
  
  
         # Create and print the header
-        headers = ['Indicator','Symbol','Buy','Hold','Value']
+        headers = ['Symbol','200SMASV','200SMASS','200SMAS+','200SMASS+', '90HIV', '90HI+','30VSMAV','30VSMA+']
         print('|{:^10s}|{:^10s}|{:^10s}|{:^10s}|{:^10s}|'.format(*headers))
         print('|'+'-'*10+'|'+'-'*10+'|'+'-'*10+'|'+'-'*10+'|'+'-'*10+'|')
  
